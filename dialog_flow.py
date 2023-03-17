@@ -1,26 +1,4 @@
-import os
-import logging
-
-from dotenv import load_dotenv
-from telegram import Update
-from telegram.ext import Updater
-from telegram.ext import CallbackContext, CommandHandler
-from telegram.ext import MessageHandler, Filters
 from google.cloud import dialogflow
-
-
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                     level=logging.INFO)
-
-logger = logging.getLogger(__name__)
-
-
-# def echo(update: Update, context: CallbackContext):
-#     context.bot.send_message(chat_id=update.effective_chat.id, text=update.message.text)
-
-
-# def start(update: Update, context: CallbackContext):
-#     context.bot.send_message(chat_id=update.effective_chat.id, text="Здравствуйте!")
 
 
 def detect_intent_texts(project_id, session_id, text, language_code):
@@ -53,36 +31,3 @@ def detect_intent_texts(project_id, session_id, text, language_code):
     print("Fulfillment text: {}\n".format(response.query_result.fulfillment_text))
 
     return response.query_result.fulfillment_text
-
-
-def keep_conversation(update: Update, context: CallbackContext, project_id):
-    language_code = "ru"
-    answer = detect_intent_texts(
-        project_id,
-        update.effective_chat.id,
-        update.message.text,
-        language_code)
-    context.bot.send_message(chat_id=update.effective_chat.id, text=answer)
-
-
-if __name__ == '__main__':
-    load_dotenv()
-    tg_token = os.getenv("TELEGRAM_BOT_TOKEN")
-    project_id = os.getenv("GOOGLE_CLOUD_PROJECT_ID")
-
-    updater = Updater(tg_token)
-    dispatcher = updater.dispatcher
-
-    # start_handler = CommandHandler('start', start)
-    # dispatcher.add_handler(start_handler)
-
-    # echo_handler = MessageHandler(Filters.text & (~Filters.command), echo)
-    # dispatcher.add_handler(echo_handler)
-
-    dialogflow_handler = MessageHandler(
-        Filters.text & (~Filters.command),
-        lambda update, context: keep_conversation(update, context, project_id)
-    )
-    dispatcher.add_handler(dialogflow_handler)
-
-    updater.start_polling()
