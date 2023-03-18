@@ -14,10 +14,16 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 
-def echo(event, vk_api):
+def keep_conversation(event, vk_api, project_id):
+    language_code = "ru"
+    answer = detect_intent_texts(
+        project_id,
+        event.user_id,
+        event.text,
+        language_code)
     vk_api.messages.send(
         user_id=event.user_id,
-        message=event.text,
+        message=answer,
         random_id=random.randint(1,1000)
     )
 
@@ -33,14 +39,7 @@ def main():
 
     for event in longpoll.listen():
         if event.type == VkEventType.MESSAGE_NEW and event.to_me:
-            echo(event, vk_api)
-        # if event.type == VkEventType.MESSAGE_NEW:
-        #     print('Новое сообщение:')
-        #     if event.to_me:
-        #         print('Для меня от: ', event.user_id)
-        #     else:
-        #         print('От меня для: ', event.user_id)
-        #     print('Текст:', event.text) 
+            keep_conversation(event, vk_api, project_id)
 
 
 if __name__ == '__main__':
