@@ -21,11 +21,12 @@ def keep_conversation(event, vk_api, project_id):
         event.user_id,
         event.text,
         language_code)
-    vk_api.messages.send(
-        user_id=event.user_id,
-        message=answer,
-        random_id=random.randint(1,1000)
-    )
+    if answer:
+        vk_api.messages.send(
+            user_id=event.user_id,
+            message=answer,
+            random_id=random.randint(1,1000)
+        )
 
 
 def main():
