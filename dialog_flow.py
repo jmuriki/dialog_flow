@@ -28,8 +28,11 @@ def detect_intent_texts(project_id, session_id, text, language_code):
             response.query_result.intent_detection_confidence,
         )
     )
-    print("Fulfillment text: {}\n".format(response.query_result.fulfillment_text))
+    print("Fulfillment text: {}\n".format(
+        response.query_result.fulfillment_text)
+    )
 
+    distinction_status = True
     if response.query_result.intent.is_fallback:
-        return None
-    return response.query_result.fulfillment_text
+        distinction_status = False
+    return distinction_status, response.query_result.fulfillment_text
