@@ -8,24 +8,26 @@ from dialog_flow import detect_intent_texts
 from vk_api.longpoll import VkLongPoll, VkEventType
 
 
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                     level=logging.INFO)
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
 
 logger = logging.getLogger(__name__)
 
 
 def keep_conversation(event, vk_api, project_id):
     language_code = "ru"
-    answer = detect_intent_texts(
+    distinction_status, answer = detect_intent_texts(
         project_id,
         event.user_id,
         event.text,
         language_code)
-    if answer:
+    if distinction_status:
         vk_api.messages.send(
             user_id=event.user_id,
             message=answer,
-            random_id=random.randint(1,1000)
+            random_id=random.randint(1, 1000)
         )
 
 
@@ -38,9 +40,14 @@ def main():
 
     longpoll = VkLongPoll(vk_session)
 
-    for event in longpoll.listen():
-        if event.type == VkEventType.MESSAGE_NEW and event.to_me:
-            keep_conversation(event, vk_api, project_id)
+    while True:
+        try:
+            for event in longpoll.listen():
+                if event.type == VkEventType.MESSAGE_NEW and event.to_me:
+                    keep_conversation(event, vk_api, project_id)
+        except Exception as error:
+            logger.exception(error)
+            continue
 
 
 if __name__ == '__main__':
