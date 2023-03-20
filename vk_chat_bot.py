@@ -1,17 +1,16 @@
 import os
 import random
 import logging
+import telegram
 import vk_api as vk
 
 from dotenv import load_dotenv
 from dialog_flow import detect_intent_texts
 from vk_api.longpoll import VkLongPoll, VkEventType
+from telegram_logs_handler import TelegramLogsHandler
 
 
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
+NAME = os.path.basename(__file__)
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +32,13 @@ def keep_conversation(event, vk_api, project_id):
 
 def main():
     load_dotenv()
+
+    telegram_notify_token = os.environ["TELEGRAM_NOTIFY_TOKEN"]
+    chat_id = os.environ["TELEGRAM_CHAT_ID"]
+    notify_bot = telegram.Bot(token=telegram_notify_token)
+    logger.setLevel(logging.INFO)
+    logger.addHandler(TelegramLogsHandler(notify_bot, chat_id))
+
     vk_api_token = os.getenv("VK_API_TOKEN")
     project_id = os.getenv("GOOGLE_CLOUD_PROJECT_ID")
     vk_session = vk.VkApi(token=vk_api_token)
@@ -46,7 +52,7 @@ def main():
                 if event.type == VkEventType.MESSAGE_NEW and event.to_me:
                     keep_conversation(event, vk_api, project_id)
         except Exception as error:
-            logger.exception(error)
+            logger.exception(NAME, error)
             continue
 
 

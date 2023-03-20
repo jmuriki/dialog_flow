@@ -9,12 +9,10 @@ from telegram.ext import Updater
 from telegram.ext import CallbackContext
 from telegram.ext import MessageHandler, Filters
 from dialog_flow import detect_intent_texts
+from telegram_logs_handler import TelegramLogsHandler
 
 
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
+NAME = os.path.basename(__file__)
 
 logger = logging.getLogger(__name__)
 
@@ -35,19 +33,26 @@ def keep_conversation(update: Update, context: CallbackContext, project_id):
             )
             flag = False
         except telegram.error.NetworkError as error:
-            logger.error(error)
+            logger.error(NAME, error)
             time.sleep(1)
         except Exception as error:
-            logger.exception(error)
+            logger.exception(NAME, error)
             continue
 
 
 def main():
     load_dotenv()
-    tg_token = os.getenv("TELEGRAM_BOT_TOKEN")
+
+    telegram_notify_token = os.environ["TELEGRAM_NOTIFY_TOKEN"]
+    chat_id = os.environ["TELEGRAM_CHAT_ID"]
+    notify_bot = telegram.Bot(token=telegram_notify_token)
+    logger.setLevel(logging.INFO)
+    logger.addHandler(TelegramLogsHandler(notify_bot, chat_id))
+
+    telegram_bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
     project_id = os.getenv("GOOGLE_CLOUD_PROJECT_ID")
 
-    updater = Updater(tg_token)
+    updater = Updater(telegram_bot_token)
     dispatcher = updater.dispatcher
 
     dialogflow_handler = MessageHandler(
