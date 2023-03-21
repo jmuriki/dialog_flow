@@ -30,6 +30,7 @@ def keep_conversation(event, vk_api, project_id):
                     message=answer,
                     random_id=random.randint(1, 1000)
                 )
+            return
         except Exception as error:
             logger.exception(error)
             time.sleep(time_sleep)
