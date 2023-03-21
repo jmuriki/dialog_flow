@@ -37,12 +37,6 @@ def create_intent(project_id, theme, questions, answer):
     print("Intent created: {}".format(response))
 
 
-def get_training_phrases(url):
-    response = requests.get(url)
-    response.raise_for_status()
-    return response.json()
-
-
 def main():
     load_dotenv()
     project_id = os.getenv("GOOGLE_CLOUD_PROJECT_ID")
@@ -50,7 +44,9 @@ def main():
     json_path = os.getenv("JSON_PATH")
     training_phrases_payload = {}
     if json_url:
-        training_phrases_payload.update(get_training_phrases(json_url))
+        response = requests.get(json_url)
+        response.raise_for_status()
+        training_phrases_payload.update(response.json())
     if json_path:
         with open(json_path, "r") as file:
             payload = json.load(file)

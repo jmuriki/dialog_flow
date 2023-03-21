@@ -12,15 +12,13 @@ from dialog_flow import detect_intent_texts
 from telegram_logs_handler import TelegramLogsHandler
 
 
-NAME = os.path.basename(__file__)
-
 logger = logging.getLogger(__name__)
 
 
 def keep_conversation(update: Update, context: CallbackContext, project_id):
     language_code = "ru"
-    flag = True
-    while flag:
+    time_sleep = 0
+    while True:
         try:
             _, answer = detect_intent_texts(
                 project_id,
@@ -31,17 +29,23 @@ def keep_conversation(update: Update, context: CallbackContext, project_id):
                 chat_id=update.effective_chat.id,
                 text=answer
             )
-            flag = False
+            return
         except telegram.error.NetworkError as error:
-            logger.error(NAME, error)
+            logger.error(error)
             time.sleep(1)
         except Exception as error:
-            logger.exception(NAME, error)
-            continue
+            logger.exception(error)
+            time.sleep(time_sleep)
+            time_sleep += 1
 
 
 def main():
     load_dotenv()
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(process)d - %(levelname)s - %(message)s",
+    )
 
     telegram_notify_token = os.environ["TELEGRAM_NOTIFY_TOKEN"]
     chat_id = os.environ["TELEGRAM_CHAT_ID"]

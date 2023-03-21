@@ -1,4 +1,5 @@
 import os
+import time
 import random
 import logging
 import telegram
@@ -10,28 +11,38 @@ from vk_api.longpoll import VkLongPoll, VkEventType
 from telegram_logs_handler import TelegramLogsHandler
 
 
-NAME = os.path.basename(__file__)
-
 logger = logging.getLogger(__name__)
 
 
 def keep_conversation(event, vk_api, project_id):
     language_code = "ru"
-    distinction_status, answer = detect_intent_texts(
-        project_id,
-        event.user_id,
-        event.text,
-        language_code)
-    if distinction_status:
-        vk_api.messages.send(
-            user_id=event.user_id,
-            message=answer,
-            random_id=random.randint(1, 1000)
-        )
+    time_sleep = 0
+    while True:
+        try:
+            distinction_fail, answer = detect_intent_texts(
+                project_id,
+                event.user_id,
+                event.text,
+                language_code)
+            if not distinction_fail:
+                vk_api.messages.send(
+                    user_id=event.user_id,
+                    message=answer,
+                    random_id=random.randint(1, 1000)
+                )
+        except Exception as error:
+            logger.exception(error)
+            time.sleep(time_sleep)
+            time_sleep += 1
 
 
 def main():
     load_dotenv()
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(process)d %(levelname)s %(message)s",
+    )
 
     telegram_notify_token = os.environ["TELEGRAM_NOTIFY_TOKEN"]
     chat_id = os.environ["TELEGRAM_CHAT_ID"]
@@ -46,14 +57,9 @@ def main():
 
     longpoll = VkLongPoll(vk_session)
 
-    while True:
-        try:
-            for event in longpoll.listen():
-                if event.type == VkEventType.MESSAGE_NEW and event.to_me:
-                    keep_conversation(event, vk_api, project_id)
-        except Exception as error:
-            logger.exception(NAME, error)
-            continue
+    for event in longpoll.listen():
+        if event.type == VkEventType.MESSAGE_NEW and event.to_me:
+            keep_conversation(event, vk_api, project_id)
 
 
 if __name__ == '__main__':
